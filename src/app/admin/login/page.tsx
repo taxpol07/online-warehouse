@@ -13,6 +13,14 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
+    if (!supabase) {
+      setError(
+        "Supabase yapılandırılmamış. Lütfen NEXT_PUBLIC_SUPABASE_URL ve NEXT_PUBLIC_SUPABASE_ANON_KEY ortam değişkenlerini ekleyin."
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
       const { error: authError } = await supabase.auth.signInWithPassword({
         email: formData.email.trim(),

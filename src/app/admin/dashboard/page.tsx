@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [editCategory, setEditCategory] = useState("");
 
   const fetchData = async () => {
+    if (!supabase) return;
     const { data } = await supabase
       .from("equipment")
       .select("*")
@@ -51,7 +52,7 @@ export default function DashboardPage() {
   }, []);
 
   const uploadImages = async () => {
-    if (!images) return [];
+    if (!images || !supabase) return [];
 
     const urls: string[] = [];
 
@@ -76,6 +77,7 @@ export default function DashboardPage() {
   };
 
   const addEquipment = async () => {
+    if (!supabase) return;
     const imageUrls = await uploadImages();
 
     await supabase.from("equipment").insert([
@@ -103,6 +105,7 @@ export default function DashboardPage() {
   };
 
   const deleteEquipment = async (id: string) => {
+    if (!supabase) return;
     // Silme işlemi öncesi basit bir onay mekanizması (İyi bir UX pratiği)
     if (window.confirm("Are you sure you want to delete this equipment?")) {
       await supabase.from("equipment").delete().eq("id", id);
@@ -121,7 +124,7 @@ export default function DashboardPage() {
   };
 
   const updateEquipment = async () => {
-    if (!editingItem) return;
+    if (!editingItem || !supabase) return;
 
     await supabase
       .from("equipment")
@@ -140,6 +143,7 @@ export default function DashboardPage() {
   };
 
   const toggleStatus = async (item: Equipment) => {
+    if (!supabase) return;
     const newStatus = item.status === "available" ? "sold" : "available";
 
     await supabase

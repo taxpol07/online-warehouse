@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase/auth";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase/auth";
 import { useRouter } from "next/navigation";
 
 // 1. ADIM: TypeScript Interface
@@ -27,6 +27,10 @@ export default function HomePage() {
 
   // PRODUCTS
   const fetchProducts = async () => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data } = await supabase
       .from("equipment")
@@ -39,6 +43,7 @@ export default function HomePage() {
 
   // CATEGORIES
   const fetchCategories = async () => {
+    if (!supabase) return;
     const { data } = await supabase.from("equipment").select("category");
 
     if (!data) return;
@@ -90,6 +95,18 @@ export default function HomePage() {
           </button>
         </div>
       </nav>
+
+      {/* SUPABASE YAPILANDIRMA UYARISI */}
+      {!isSupabaseConfigured && (
+        <div className="bg-amber-50 border-b border-amber-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 text-sm text-amber-800">
+            <strong className="font-semibold">Supabase not configured.</strong>{" "}
+            Add <code className="font-mono">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
+            <code className="font-mono">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your
+            project environment variables to load inventory.
+          </div>
+        </div>
+      )}
 
       {/* HERO / SEARCH BÖLÜMÜ */}
       <div className="bg-zinc-100 border-b border-zinc-200">

@@ -36,6 +36,10 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       if (!id) return;
+      if (!supabase) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
 
       const { data, error } = await supabase
