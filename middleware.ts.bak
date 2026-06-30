@@ -10,36 +10,20 @@ export async function middleware(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name) {
-          return req.cookies.get(name)?.value;
-        },
-        set(name, value, options) {
-          res.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name, options) {
-          res.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
-        },
+        get(name) { return req.cookies.get(name)?.value; },
+        set(name, value, options) { res.cookies.set({ name, value, ...options }); },
+        remove(name, options) { res.cookies.set({ name, value: "", ...options }); },
       },
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { data: { user } } = await supabase.auth.getUser();
   const url = req.nextUrl;
 
-  // 🔒 ADMIN DASHBOARD PROTECTION
+  // LOG EKLEDİK: Middleware'in ne düşündüğünü konsolda göreceğiz
   if (url.pathname.startsWith("/admin/dashboard")) {
     if (!user) {
+      console.log("🔒 Middleware: Oturum bulunamadı, login'e gönderiliyor...");
       url.pathname = "/admin/login";
       return NextResponse.redirect(url);
     }
@@ -49,5 +33,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/dashboard/:path*"], // Login sayfasını matcher'dan çıkardık!
 };
