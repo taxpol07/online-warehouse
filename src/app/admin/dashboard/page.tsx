@@ -50,28 +50,32 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  const uploadImages = async () => {
-    if (!images) return [];
-
+const uploadImages = async () => {
+    if (!images || images.length === 0) return [];
     const urls: string[] = [];
 
     for (let i = 0; i < images.length; i++) {
       const file = images[i];
-      const fileName = `${Date.now()}-${file.name}`;
+      // Dosya adındaki boşlukları ve Türkçe karakterleri temizliyoruz (Supabase bazen bunlara takılır)
+      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-]/g, "")}`;
 
-      const { error } = await supabase.storage
+      console.log(`${fileName} yükleniyor...`); // F12'de göreceğiz
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from("equipment-images")
         .upload(fileName, file);
 
-      if (!error) {
+      if (uploadError) {
+        // EĞER HATA VARSA ARTIK EKRANDA BAĞIRACAK!
+        alert(`Fotoğraf yüklenemedi: ${uploadError.message}`);
+        console.error("Detaylı Supabase Hatası:", uploadError);
+      } else {
         const { data } = supabase.storage
           .from("equipment-images")
           .getPublicUrl(fileName);
-
         urls.push(data.publicUrl);
       }
     }
-
     return urls;
   };
 
