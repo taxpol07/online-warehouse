@@ -35,7 +35,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // YENİ: Seçili kategoriyi tuttuğumuz state
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   const envMissing = !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -66,10 +65,8 @@ export default function HomePage() {
     fetchItems();
   }, []);
 
-  // YENİ: Benzersiz kategorileri listele ve "All" seçeneğini başa ekle
   const categories = ["All", ...Array.from(new Set(items.map((item) => item.category)))];
 
-  // YENİ: Sadece seçili kategoriye ait ürünleri filtrele
   const filteredItems = selectedCategory === "All" 
     ? items 
     : items.filter((item) => item.category === selectedCategory);
@@ -78,25 +75,41 @@ export default function HomePage() {
     <main className="min-h-screen bg-slate-50 text-slate-900 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         
-        {/* ÜST BİLGİ VE LİNK */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+        {/* ÜST BİLGİ, MARKA VE İMZA KISMI */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
-              Premier Catering Warehouse
-            </h1>
-            <p className="mt-2 text-slate-600 max-w-2xl">
-              En yeni ekipmanları buradan görüntüleyin. Ürün detaylarını görmek için kartlardan birine tıklayın.
+            {/* Şık KESER Logosu */}
+            <div className="flex items-baseline gap-2 mb-1">
+              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-blue-900 to-slate-900">
+                KESER
+              </h1>
+              <span className="text-2xl sm:text-3xl font-bold text-slate-400 tracking-tight">
+                Catering
+              </span>
+            </div>
+            
+            <p className="mt-2 text-slate-600 max-w-2xl text-base sm:text-lg">
+              En yeni endüstriyel mutfak ekipmanlarını buradan görüntüleyin. Ürün detaylarını görmek için kartlardan birine tıklayın.
             </p>
+
+            {/* Geliştirici İmza Rozeti */}
+            <div className="mt-4">
+              <span className="inline-flex items-center rounded-full bg-blue-50/80 px-3.5 py-1.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/20 shadow-sm backdrop-blur-sm">
+                <span className="mr-1.5">🚀</span> 
+                Designed & Developed by <strong className="ml-1 tracking-wide">Polat Can</strong>
+              </span>
+            </div>
           </div>
+
           <Link
             href="/admin/login"
-            className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 hover:bg-slate-700 transition"
+            className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-sm font-semibold text-white shadow-xl shadow-slate-900/20 hover:bg-slate-800 hover:-translate-y-0.5 transition-all"
           >
             Admin Login
           </Link>
         </div>
 
-        {/* YENİ: KATEGORİ FİLTRE BUTONLARI */}
+        {/* KATEGORİ FİLTRE BUTONLARI */}
         {!loading && items.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-8">
             {categories.map((category) => (
@@ -118,7 +131,7 @@ export default function HomePage() {
         {/* İÇERİK ALANI */}
         {loading ? (
           <div className="min-h-[320px] flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-slate-900" />
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600" />
           </div>
         ) : error ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
@@ -155,12 +168,11 @@ export default function HomePage() {
                       alt={item.title}
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
                     />
-                    {/* Status Badge'i resmin üzerine taşıdım, daha modern durur */}
                     <div className="absolute top-4 right-4">
-                       <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full shadow-sm backdrop-blur-md ${
+                       <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full shadow-sm backdrop-blur-md border ${
                          statusText === "Available" 
-                          ? "bg-emerald-500/90 text-white" 
-                          : "bg-red-500/90 text-white"
+                          ? "bg-emerald-500/90 text-white border-emerald-400" 
+                          : "bg-red-500/90 text-white border-red-400"
                        }`}>
                          {statusText}
                        </span>
@@ -168,7 +180,7 @@ export default function HomePage() {
                   </div>
                   <div className="p-6">
                     <div className="flex items-center gap-2 mb-3 text-sm">
-                      <span className="text-blue-600 font-semibold bg-blue-50 px-2.5 py-0.5 rounded-md">{item.category}</span>
+                      <span className="text-blue-600 font-semibold bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-md">{item.category}</span>
                     </div>
                     <h2 className="text-xl font-bold text-slate-900 mb-1 truncate">{item.title}</h2>
                     <p className="text-slate-500 text-sm mb-4 truncate">
