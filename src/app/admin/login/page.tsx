@@ -1,9 +1,11 @@
 "use client";
-
+//ADMİN/LOGİN/PAGE.TSX SAYFASI
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/auth";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,11 +25,7 @@ export default function LoginPage() {
         throw authError;
       }
 
-      // BAŞARILI GİRİŞ:
-      // window.location.href, tarayıcıyı zorla yeniler ve Middleware'in 
-      // cookie'leri (oturum bilgisini) milisaniyesinde yakalamasını sağlar.
-      window.location.href = "/admin/dashboard";
-      
+      await router.replace("/admin/dashboard");
     } catch (err: any) {
       console.error("Giriş hatası:", err);
       setError(err.message || "Giriş yapılamadı, lütfen tekrar deneyin.");

@@ -1,10 +1,9 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase/auth";
-import { useRouter } from "next/navigation";
 
-// 1. ADIM: TypeScript Interface
 interface Equipment {
   id: string;
   title: string;
@@ -12,202 +11,145 @@ interface Equipment {
   brand: string;
   model: string;
   price: number;
+  description: string;
+  status: string;
   image_urls: string[];
-  status: "Available" | "Sold";
 }
+
+const parseImageUrls = (value: unknown): string[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed.filter(Boolean) : [value];
+    } catch {
+      return [value];
+    }
+  }
+  return [];
+};
 
 export default function HomePage() {
   const [items, setItems] = useState<Equipment[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
   const [loading, setLoading] = useState(true);
-
-  const router = useRouter();
-
-  // PRODUCTS
-  const fetchProducts = async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from("equipment")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    setItems(data || []);
-    setLoading(false);
-  };
-
-  // CATEGORIES
-  const fetchCategories = async () => {
-    const { data } = await supabase.from("equipment").select("category");
-
-    if (!data) return;
-
-    const unique = Array.from(
-      new Set(data.map((item) => item.category).filter(Boolean))
-    );
-
-    setCategories(unique);
-  };
+  const [error, setError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
+  const envMissing = !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   useEffect(() => {
-    fetchProducts();
-    fetchCategories();
+    const fetchItems = async () => {
+      setLoading(true);
+      setDebugInfo(null);
+      const { data, error } = await supabase
+        .from("equipment")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Homepage fetch error:", error);
+        setError(error.message || JSON.stringify(error));
+        setItems([]);
+        setDebugInfo("Supabase sorgusunda hata oluştu. Lütfen policy ve anon key ayarlarını kontrol edin.");
+      } else {
+        setError(null);
+        const parsedItems = (data || []).map((item: any) => ({
+          ...item,
+          image_urls: parseImageUrls(item.image_urls),
+        }));
+        setItems(parsedItems);
+        setDebugInfo(`Supabase sorgusu tamamlandı. Dönen satır sayısı: ${parsedItems.length}`);
+      }
+
+      setLoading(false);
+    };
+
+    fetchItems();
   }, []);
 
-  // FILTER (OPTIMIZED)
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      const keyword = search.toLowerCase();
-
-      const matchesSearch =
-        item.title?.toLowerCase().includes(keyword) ||
-        item.brand?.toLowerCase().includes(keyword) ||
-        item.model?.toLowerCase().includes(keyword);
-
-      const matchesCategory = category === "all" || item.category === category;
-
-      return matchesSearch && matchesCategory;
-    });
-  }, [items, search, category]);
-
   return (
-    // YENİ ARKA PLAN: Göz yormayan, sıcak gri/taş rengi (Zinc tonları)
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans">
-      
-      {/* NAVBAR */}
-      <nav className="sticky top-0 bg-zinc-40/90 backdrop-blur-md border-b border-zinc-200 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900">
-            Premier <span className="text-blue-600">Catering UK</span>
-          </h1>
-
-          <button
-            onClick={() => router.push("/admin/login")}
-            className="text-sm font-semibold border-2 border-zinc-800 text-zinc-800 px-5 py-2 rounded-lg hover:bg-zinc-800 hover:text-white transition-all duration-200"
+    <main className="min-h-screen bg-slate-50 text-slate-900 py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
+              Premier Catering Warehouse
+            </h1>
+            <p className="mt-2 text-slate-600 max-w-2xl">
+              En yeni ekipmanları buradan görüntüleyin. Ürün detaylarını görmek için kartlardan birine tıklayın.
+            </p>
+          </div>
+          <Link
+            href="/admin/login"
+            className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 hover:bg-slate-700 transition"
           >
-            Admin Panel
-          </button>
+            Admin Login
+          </Link>
         </div>
-      </nav>
 
-      {/* HERO / SEARCH BÖLÜMÜ */}
-      <div className="bg-zinc-100 border-b border-zinc-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 text-center md:text-left">
-          <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight text-zinc-800">
-            Find the Best Used <br className="hidden md:block" /> 
-            <span className="text-blue-600">Commercial Equipment</span>
-          </h2>
-          <p className="text-zinc-600 mb-8 text-lg max-w-2xl">
-            Browse our up-to-date warehouse inventory. High quality, tested, and ready for your professional kitchen.
-          </p>
-
-          {/* ARAMA VE FİLTRELEME ÇUBUĞU */}
-          <div className="flex flex-col md:flex-row gap-4 max-w-3xl bg-white p-2 rounded-xl border border-zinc-300 shadow-sm">
-            <div className="flex-1 relative">
-              <span className="absolute inset-y-0 left-4 flex items-center text-zinc-400">
-                🔍
-              </span>
-              <input
-                type="text"
-                placeholder="Search ovens, fryers, brands..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded-lg border-none bg-transparent focus:outline-none focus:ring-0 text-zinc-900 placeholder-zinc-400"
-              />
-            </div>
-            
-            <div className="h-px w-full md:h-auto md:w-px bg-zinc-200"></div>
-
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="px-4 py-3 bg-transparent border-none focus:outline-none focus:ring-0 text-zinc-700 font-medium cursor-pointer"
-            >
-              <option value="all">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* ÜRÜN LİSTESİ (PRODUCTS GRID) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+          <div className="min-h-[320px] flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-slate-900" />
           </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-zinc-300">
-            <div className="text-4xl mb-3">📦</div>
-            <h3 className="text-lg font-semibold text-zinc-900">No equipment found</h3>
-            <p className="text-zinc-500 mt-1">Try adjusting your search or category filter.</p>
+        ) : error ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
+            Hata: {error}
+          </div>
+        ) : envMissing ? (
+          <div className="rounded-2xl border border-orange-200 bg-orange-50 p-6 text-orange-700">
+            Yayına alınan ortamda Supabase anahtarları bulunamadı. `NEXT_PUBLIC_SUPABASE_URL` ve `NEXT_PUBLIC_SUPABASE_ANON_KEY` değerlerini projenize ekleyin.
+          </div>
+        ) : items.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
+            Henüz ürün eklenmemiş.
+            {debugInfo && (
+              <div className="mt-4 text-sm text-slate-400">{debugInfo}</div>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => router.push(`/product/${item.id}`)}
-                className="group cursor-pointer bg-white rounded-2xl border border-zinc-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
-              >
-                {/* GÖRSEL ALANI (YENİDEN BOYUTLANDIRILDI) */}
-                {/* aspect-square veya aspect-[4/3] kullanarak çerçevenin oranını kilitliyoruz. object-cover ise fotoğrafın içini bozmadan doldurmasını sağlıyor. */}
-                <div className="w-full aspect-[4/3] bg-zinc-100 relative overflow-hidden flex items-center justify-center">
-                  {item.image_urls?.[0] ? (
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {items.map((item) => {
+              const statusText = item.status?.toString().toLowerCase() === "available"
+                ? "Available"
+                : item.status?.toString().toLowerCase() === "sold"
+                ? "Sold"
+                : item.status;
+
+              return (
+                <Link
+                  key={item.id}
+                  href={`/product/${item.id}`}
+                  className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                >
+                  <div className="h-64 bg-slate-100 overflow-hidden">
                     <img
-                      src={item.image_urls[0]}
+                      src={item.image_urls[0] || "/placeholder.png"}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                     />
-                  ) : (
-                    <span className="text-zinc-400 font-medium">No Image</span>
-                  )}
-                  
-                  {/* DURUM ETİKETİ (Status Badge) */}
-                  <div className="absolute top-3 right-3">
-                    <span 
-                      className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm backdrop-blur-md ${
-                        item.status === "Available" 
-                          ? "bg-emerald-100/90 text-emerald-800 border border-emerald-200" 
-                          : "bg-rose-100/90 text-rose-800 border border-rose-200"
-                      }`}
-                    >
-                      {item.status}
-                    </span>
                   </div>
-                </div>
-
-                {/* BİLGİ ALANI */}
-                <div className="p-5 flex flex-col flex-grow bg-white">
-                  <div className="flex justify-between items-start gap-2 mb-2">
-                    <h3 className="font-bold text-zinc-900 leading-tight line-clamp-2">
-                      {item.title}
-                    </h3>
+                  <div className="p-5">
+                    <div className="flex items-center justify-between gap-3 mb-3 text-sm">
+                      <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700 uppercase tracking-[0.18em]">
+                        {statusText}
+                      </span>
+                      <span className="text-slate-500">{item.category}</span>
+                    </div>
+                    <h2 className="text-xl font-semibold text-slate-900 mb-2">{item.title}</h2>
+                    <p className="text-slate-600 text-sm mb-4">
+                      {item.brand} • {item.model}
+                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-lg font-bold text-slate-900">£{item.price.toLocaleString("en-GB")}</span>
+                      <span className="text-slate-400 text-sm">Detaylar için tıklayın</span>
+                    </div>
                   </div>
-
-                  <p className="text-sm text-zinc-500 mb-4 line-clamp-1">
-                    {item.brand} • {item.model}
-                  </p>
-
-                  <div className="mt-auto flex justify-between items-end border-t border-zinc-100 pt-4">
-                    <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider bg-zinc-100 px-2 py-1 rounded-md">
-                      {item.category}
-                    </span>
-                    <span className="text-xl font-extrabold text-zinc-900">
-                      £{item.price.toLocaleString("en-GB")}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

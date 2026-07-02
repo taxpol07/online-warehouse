@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/auth";
 import { useParams } from "next/navigation";
 
-// 1. ADIM: TypeScript Interface (Veri yapımızı kesinleştiriyoruz)
+// VERİ TİPİMİZ
 interface Equipment {
   id: string;
   title: string;
@@ -16,18 +16,32 @@ interface Equipment {
   condition: string;
   dimensions: string;
   power_requirements: string;
-  image_urls: string[];
+  image_urls: string[]; 
   status: "Available" | "Sold";
 }
+
+// HATA ÇÖZEN FONKSİYON: Ne gelirse gelsin onu diziye (Array) çevirir.
+const parseImageUrls = (value: unknown): string[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed.filter(Boolean) : [value];
+    } catch {
+      return [value];
+    }
+  }
+  return [];
+};
 
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params?.id as string;
 
-  // State tanımlamaları
   const [product, setProduct] = useState<Equipment | null>(null);
   const [loading, setLoading] = useState(true);
-  const [mainImage, setMainImage] = useState<string | null>(null); // Ana görsel için yeni state
+  const [mainImage, setMainImage] = useState<string | null>(null); 
 
   // 🔗 SOCIAL LINKS
   const WHATSAPP_NUMBER = "447366966125";
@@ -48,10 +62,15 @@ export default function ProductDetailPage() {
         console.error("Fetch error:", error.message);
         setProduct(null);
       } else {
-        setProduct(data);
-        // Eğer görsel varsa, ilk görseli ana görsel olarak ayarla
-        if (data?.image_urls?.length > 0) {
-          setMainImage(data.image_urls[0]);
+        // Yeni güvenli fonksiyonumuzu kullanıyoruz
+        const safeImageUrls = parseImageUrls(data?.image_urls);
+        
+        const formattedData = { ...data, image_urls: safeImageUrls };
+        setProduct(formattedData);
+        
+        // İlk görseli ana görsel yap
+        if (safeImageUrls.length > 0) {
+          setMainImage(safeImageUrls[0]);
         }
       }
       setLoading(false);
@@ -76,16 +95,18 @@ export default function ProductDetailPage() {
     );
   }
 
-  // WhatsApp mesajını güvenli formata çeviriyoruz
   const whatsappMessage = encodeURIComponent(
     `Hi, I'm interested in the ${product.brand} ${product.model} (${product.title}) listed for £${product.price}.`
   );
+
+  const isAvailable = product.status === "Available";
+  const displayStatus = product.status || "Available";
 
   return (
     <div className="bg-gray-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-6xl mx-auto">
         
-        {/* BREADCRUMB (Kullanıcı dostu navigasyon) */}
+        {/* BREADCRUMB */}
         <div className="text-sm text-gray-500 mb-6">
           Home / {product.category} / <span className="text-gray-800 font-medium">{product.title}</span>
         </div>
@@ -94,7 +115,7 @@ export default function ProductDetailPage() {
           
           {/* SOL BÖLÜM: GÖRSEL GALERİSİ */}
           <div className="lg:col-span-7 flex flex-col gap-4">
-            {/* Ana Görsel (Büyük Kutu) */}
+            {/* Ana Görsel */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 h-[400px] md:h-[500px] flex items-center justify-center overflow-hidden relative">
               {mainImage ? (
                 <img 
@@ -107,8 +128,8 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Küçük Resimler (Thumbnails - Kaydırılabilir) */}
-            {product.image_urls?.length > 1 && (
+            {/* Küçük Resimler (EKSTRA GÜVENLİK EKLENDİ) */}
+            {Array.isArray(product.image_urls) && product.image_urls.length > 1 && (
               <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                 {product.image_urls.map((img, i) => (
                   <button
@@ -147,12 +168,12 @@ export default function ProductDetailPage() {
                 </span>
                 <span 
                   className={`px-4 py-1.5 rounded-full text-sm font-bold tracking-wide uppercase ${
-                    product.status === "Available" 
+                    isAvailable 
                       ? "bg-green-100 text-green-700 border border-green-200" 
                       : "bg-red-100 text-red-700 border border-red-200"
                   }`}
                 >
-                  {product.status}
+                  {displayStatus}
                 </span>
               </div>
             </div>
@@ -213,7 +234,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* FLOATING WHATSAPP BUTTON (Mobil için optimize) */}
+        {/* FLOATING WHATSAPP BUTTON */}
         <a
           href={`https://wa.me/${WHATSAPP_NUMBER}`}
           target="_blank"

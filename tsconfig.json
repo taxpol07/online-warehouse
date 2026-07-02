@@ -33,7 +33,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "middleware.ts.bak",
+    "middleware.ts",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
