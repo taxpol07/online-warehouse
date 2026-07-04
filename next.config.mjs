@@ -1,3 +1,12 @@
+import withPWAInit from "next-pwa";
+
+const withPWA = withPWAInit({
+  dest: "public",
+  disable: process.env.NODE_ENV === "development", // Geliştirme ortamında (localhost) kapalı tutuyoruz
+  register: true,
+  skipWaiting: true,
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
@@ -6,14 +15,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;// Eğer burada eski ayarların varsa onları silme, bu parantezin içinde kalsın
-
-
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  disable: process.env.NODE_ENV === 'development', // Geliştirme aşamasında çerezleri bozmasın diye kapalı tutuyoruz
-  register: true,
-  skipWaiting: true,
-});
-
-module.exports = withPWA(nextConfig);
+export default withPWA(nextConfig);
