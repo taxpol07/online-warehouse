@@ -13,6 +13,8 @@ const nextConfig = {
     // Vercel build aşamasında TS hatalarını yoksayar
     ignoreBuildErrors: true,
   },
+  // YENİ: Turbopack hatasını susturur ve sitenin çok hızlı açılmasını sağlar
+  turbopack: {}, 
 };
 
 export default withPWA(nextConfig);
