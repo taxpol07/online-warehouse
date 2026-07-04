@@ -100,7 +100,7 @@ export default function DashboardPage() {
       }
     }
     return urls;
-  };
+  };                                 
 
   const addEquipment = async () => {
     const imageUrls = await uploadImages();
@@ -176,7 +176,7 @@ export default function DashboardPage() {
 
     setEditingItem(null);
     fetchData();
-  };
+  };    
 
   const toggleStatus = async (item: Equipment) => {
     const newStatus = item.status === "available" ? "sold" : "available";
