@@ -1,30 +1,23 @@
-import type { Metadata, Viewport } from "next";
+// İŞTE SİLİNEN O SİHİRLİ KABLO BU SATIR:
+import "./globals.css";
 
-// YENİ: Renk ve cihaz ayarları
-export const viewport: Viewport = {
-  themeColor: "#1e40af",
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-};
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Keser Catering",
-  description: "Premier commercial catering warehouse",
-  manifest: "/manifest.json", // BU SATIR ÇOK ÖNEMLİ
-  icons: {
-    apple: "/icon-192x192.png",
-  },
+  title: "Keser Catering Warehouse",
+  description: "En yeni endüstriyel mutfak ekipmanları",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en">
+      <body className="bg-slate-50 text-slate-900">
+        {children}
+      </body>
     </html>
   );
 }
