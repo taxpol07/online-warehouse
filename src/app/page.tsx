@@ -30,6 +30,13 @@ const parseImageUrls = (value: unknown): string[] => {
   return [];
 };
 
+// YENİ EKLENEN: Kategorileri temizleyip standartlaştıran fonksiyon (Tekrarları engeller)
+const formatCategory = (cat: string) => {
+  if (!cat) return "Other";
+  const clean = cat.trim(); // Boşlukları siler
+  return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase(); // İlk harfi büyük, kalanı küçük yapar
+};
+
 export default function HomePage() {
   const [items, setItems] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,11 +72,16 @@ export default function HomePage() {
     fetchItems();
   }, []);
 
-  const categories = ["All", ...Array.from(new Set(items.map((item) => item.category)))];
+  // GÜNCELLENEN KISIM: Kategorileri alırken formatlıyoruz
+  const categories = [
+    "All", 
+    ...Array.from(new Set(items.map((item) => formatCategory(item.category))))
+  ];
 
+  // GÜNCELLENEN KISIM: Ürünleri filtrelerken formatlı isme göre arıyoruz
   const filteredItems = selectedCategory === "All" 
     ? items 
-    : items.filter((item) => item.category === selectedCategory);
+    : items.filter((item) => formatCategory(item.category) === selectedCategory);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 py-10 px-4 sm:px-6 lg:px-8">
@@ -180,7 +192,10 @@ export default function HomePage() {
                   </div>
                   <div className="p-6">
                     <div className="flex items-center gap-2 mb-3 text-sm">
-                      <span className="text-blue-600 font-semibold bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-md">{item.category}</span>
+                      <span className="text-blue-600 font-semibold bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-md">
+                        {/* Kategori ismini kartta da düzenli gösteriyoruz */}
+                        {formatCategory(item.category)}
+                      </span>
                     </div>
                     <h2 className="text-xl font-bold text-slate-900 mb-1 truncate">{item.title}</h2>
                     <p className="text-slate-500 text-sm mb-4 truncate">
