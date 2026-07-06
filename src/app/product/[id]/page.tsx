@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/auth";
-import Link from "next/link";
+import { useParams } from "next/navigation";
+import Link from "next/link"; // Link bileşenini ekledik (Geri dön butonu için)
 
-// VERİ TİPİMİZ (Sistemi koruyoruz)
+// VERİ TİPİMİZ (Aynen korundu)
 interface Equipment {
   id: string;
   title: string;
@@ -17,10 +18,10 @@ interface Equipment {
   dimensions: string;
   power_requirements: string;
   image_urls: string[]; 
-  status: "Available" | "Sold" | string;
+  status: "Available" | "Sold";
 }
 
-// GÜVENLİ RESİM ÇEVİRİCİ (Sistemi koruyoruz)
+// HATA ÇÖZEN FONKSİYON: (Aynen korundu)
 const parseImageUrls = (value: unknown): string[] => {
   if (!value) return [];
   if (Array.isArray(value)) return value.filter(Boolean);
@@ -35,34 +36,33 @@ const parseImageUrls = (value: unknown): string[] => {
   return [];
 };
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
-  const id = params?.id;
+export default function ProductDetailPage() {
+  const params = useParams();
+  const id = params?.id as string;
 
   const [product, setProduct] = useState<Equipment | null>(null);
   const [loading, setLoading] = useState(true);
   const [mainImage, setMainImage] = useState<string | null>(null); 
 
-  // 🔗 SOCIAL LINKS
+  // 🔗 SOCIAL LINKS (Aynen korundu)
   const WHATSAPP_NUMBER = "447366966125";
   const FACEBOOK_URL = "https://www.facebook.com/profile.php?id=61572391901674";
 
   useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
-
     const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("equipment")
-          .select("*")
-          .eq("id", id)
-          .single();
+      if (!id) return;
+      setLoading(true);
 
-        if (error) throw error;
+      const { data, error } = await supabase
+        .from("equipment")
+        .select("*")
+        .eq("id", id)
+        .single();
 
+      if (error) {
+        console.error("Fetch error:", error.message);
+        setProduct(null);
+      } else {
         const safeImageUrls = parseImageUrls(data?.image_urls);
         const formattedData = { ...data, image_urls: safeImageUrls };
         setProduct(formattedData);
@@ -70,12 +70,8 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
         if (safeImageUrls.length > 0) {
           setMainImage(safeImageUrls[0]);
         }
-      } catch (err: any) {
-        console.error("Veri çekme hatası:", err.message || err);
-        setProduct(null);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
 
     fetchProduct();
@@ -84,9 +80,9 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="relative">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 border-opacity-80"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-600 text-xl">🍽️</div>
+        <div className="relative flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+          <span className="text-slate-500 font-medium animate-pulse">Loading equipment details...</span>
         </div>
       </div>
     );
@@ -96,8 +92,8 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-5 px-4 text-center">
         <div className="text-6xl mb-2">🔍</div>
-        <h1 className="text-3xl font-extrabold text-slate-900">Product Not Found</h1>
-        <p className="text-slate-500 max-w-md text-lg">The equipment you are looking for does not exist or has been recently sold and removed.</p>
+        <h1 className="text-3xl font-extrabold text-slate-900">Equipment Not Found</h1>
+        <p className="text-slate-500 max-w-md text-lg">The machine you are looking for does not exist or has been recently sold and removed.</p>
         <Link href="/" className="mt-4 px-8 py-3.5 bg-slate-900 text-white font-semibold rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 hover:-translate-y-1">
           &larr; Back to Inventory
         </Link>
@@ -109,8 +105,8 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     `Hi, I'm interested in the ${product.brand} ${product.model} (${product.title}) listed for £${product.price}.`
   );
 
-  const safeStatus = product.status ? String(product.status).toLowerCase() : "available";
-  const isAvailable = safeStatus !== "sold";
+  const isAvailable = product.status === "Available";
+  const displayStatus = product.status || "Available";
 
   return (
     <div className="bg-[#f8fafc] min-h-screen font-sans selection:bg-blue-200 pb-20">
@@ -130,12 +126,22 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        
+        {/* BREADCRUMB */}
+        <div className="text-sm text-slate-400 mb-6 font-medium flex items-center gap-2">
+          <Link href="/" className="hover:text-blue-600 transition-colors">Home</Link>
+          <span>/</span>
+          <span className="text-slate-500">{product.category}</span>
+          <span>/</span>
+          <span className="text-slate-800 font-bold truncate max-w-[200px] sm:max-w-xs">{product.title}</span>
+        </div>
+
         <div className="lg:flex lg:gap-12 xl:gap-16 items-start">
           
           {/* SOL BÖLÜM: GALERİ (STICKY YAPIŞKAN) */}
           <div className="lg:w-1/2 lg:sticky lg:top-24 mb-10 lg:mb-0">
             {/* Ana Görsel */}
-            <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200/50 p-6 h-[400px] md:h-[550px] xl:h-[600px] flex items-center justify-center overflow-hidden relative group">
+            <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200/50 p-6 h-[400px] md:h-[550px] flex items-center justify-center overflow-hidden relative group">
               {mainImage ? (
                 <img 
                   src={mainImage} 
@@ -156,7 +162,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                     ? "bg-emerald-500/90 text-white border-emerald-400 shadow-emerald-500/30" 
                     : "bg-red-500/90 text-white border-red-400 shadow-red-500/30"
                 }`}>
-                  {isAvailable ? "Available" : "Sold"}
+                  {displayStatus}
                 </span>
               </div>
             </div>
@@ -182,7 +188,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
           </div>
 
           {/* SAĞ BÖLÜM: ÜRÜN DETAYLARI */}
-          <div className="lg:w-1/2 flex flex-col pt-2 lg:pt-6">
+          <div className="lg:w-1/2 flex flex-col pt-2 lg:pt-0">
             
             {/* Kategori ve Başlık */}
             <div className="mb-8">
@@ -223,26 +229,26 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
             {/* Premium Teknik Özellikler Grid'i */}
             <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-              <span className="text-blue-600">⚡</span> Technical Specs
+              <span className="text-blue-600">⚙️</span> Specifications
             </h3>
             <div className="grid grid-cols-2 gap-4 mb-10">
               <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-2xl mb-2">🏷️</div>
+                <div className="text-2xl mb-2 text-slate-700">🏷️</div>
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Condition</div>
                 <div className="font-bold text-slate-800">{product.condition || "Not specified"}</div>
               </div>
               <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-2xl mb-2">📏</div>
+                <div className="text-2xl mb-2 text-slate-700">📏</div>
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Dimensions</div>
                 <div className="font-bold text-slate-800 line-clamp-2">{product.dimensions || "Not specified"}</div>
               </div>
               <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-2xl mb-2">🔌</div>
+                <div className="text-2xl mb-2 text-slate-700">⚡</div>
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Power Req.</div>
                 <div className="font-bold text-slate-800 line-clamp-2">{product.power_requirements || "Not specified"}</div>
               </div>
               <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-2xl mb-2">🏭</div>
+                <div className="text-2xl mb-2 text-slate-700">🏭</div>
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Manufacturer</div>
                 <div className="font-bold text-slate-800">{product.brand}</div>
               </div>
@@ -271,7 +277,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                 rel="noopener noreferrer"
                 className="flex-1 flex items-center justify-center gap-3 bg-gradient-to-r from-[#20bd5a] to-[#25D366] hover:from-[#1da850] hover:to-[#20bd5a] text-white py-4 px-6 rounded-2xl font-extrabold text-lg transition-all shadow-lg shadow-green-500/30 hover:-translate-y-1 hover:shadow-xl"
               >
-                <span className="text-2xl">💬</span> Buy via WhatsApp
+                <span className="text-2xl">💬</span> Contact on WhatsApp
               </a>
               <a
                 href={FACEBOOK_URL}
@@ -279,13 +285,23 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                 rel="noopener noreferrer"
                 className="flex-1 flex items-center justify-center gap-3 bg-white border-2 border-[#1877F2] text-[#1877F2] hover:bg-[#1877F2] hover:text-white py-4 px-6 rounded-2xl font-extrabold text-lg transition-all shadow-sm hover:shadow-lg hover:shadow-blue-500/20 hover:-translate-y-1"
               >
-                <span className="text-2xl">📘</span> Visit Facebook
+                <span className="text-2xl">📘</span> View on Facebook
               </a>
             </div>
 
           </div>
         </div>
       </div>
+
+      {/* FLOATING WHATSAPP BUTTON (Aynen korundu) */}
+      <a
+        href={`https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 bg-[#25D366] text-white w-14 h-14 flex items-center justify-center rounded-full shadow-2xl hover:scale-110 transition-transform z-50 text-2xl"
+      >
+        💬
+      </a>
     </div>
   );
 }
