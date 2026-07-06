@@ -30,18 +30,16 @@ const parseImageUrls = (value: unknown): string[] => {
   return [];
 };
 
-// YENİ EKLENEN: Kategorileri temizleyip standartlaştıran fonksiyon (Tekrarları engeller)
 const formatCategory = (cat: string) => {
   if (!cat) return "Other";
-  const clean = cat.trim(); // Boşlukları siler
-  return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase(); // İlk harfi büyük, kalanı küçük yapar
+  const clean = cat.trim(); 
+  return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase(); 
 };
 
 export default function HomePage() {
   const [items, setItems] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   const envMissing = !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -72,95 +70,101 @@ export default function HomePage() {
     fetchItems();
   }, []);
 
-  // GÜNCELLENEN KISIM: Kategorileri alırken formatlıyoruz
   const categories = [
     "All", 
     ...Array.from(new Set(items.map((item) => formatCategory(item.category))))
   ];
 
-  // GÜNCELLENEN KISIM: Ürünleri filtrelerken formatlı isme göre arıyoruz
   const filteredItems = selectedCategory === "All" 
     ? items 
     : items.filter((item) => formatCategory(item.category) === selectedCategory);
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        
-        {/* ÜST BİLGİ, MARKA VE İMZA KISMI */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-10">
-          <div>
-            {/* Şık KESER Logosu */}
-            <div className="flex items-baseline gap-2 mb-1">
-              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-blue-900 to-slate-900">
-                KESER
-              </h1>
-              <span className="text-2xl sm:text-3xl font-bold text-slate-400 tracking-tight">
-                Catering
-              </span>
+    <main className="min-h-screen bg-[#f4f7f6] text-slate-900 pb-12 font-sans selection:bg-blue-200">
+      
+      {/* ÜST BİLGİ (HEADER) */}
+      <header className="bg-white sticky top-0 z-40 border-b border-slate-200/80 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            {/* Marka Alanı */}
+            <div>
+              <div className="flex items-baseline gap-1.5">
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-slate-900">
+                  KESER
+                </h1>
+                <span className="text-sm sm:text-base font-bold text-slate-400 tracking-widest uppercase">
+                  Catering
+                </span>
+              </div>
             </div>
-            
-            <p className="mt-2 text-slate-600 max-w-2xl text-base sm:text-lg">
-              En yeni endüstriyel mutfak ekipmanlarını buradan görüntüleyin. Ürün detaylarını görmek için kartlardan birine tıklayın.
-            </p>
 
-            {/* Geliştirici İmza Rozeti */}
-            <div className="mt-4">
-              <span className="inline-flex items-center rounded-full bg-blue-50/80 px-3.5 py-1.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/20 shadow-sm backdrop-blur-sm">
-                <span className="mr-1.5">🚀</span> 
-                Designed & Developed by <strong className="ml-1 tracking-wide">Polat Can</strong>
+            {/* Admin ve İmza */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              <span className="hidden sm:inline-flex items-center rounded-full bg-blue-50/80 px-2.5 py-1 text-[10px] font-bold text-blue-700 tracking-wide">
+                🚀 By Polat Can
               </span>
+              <Link
+                href="/admin/login"
+                className="bg-slate-900 text-white p-2 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold hover:bg-slate-800 transition-colors shadow-md"
+              >
+                <span className="hidden sm:inline">Admin Login</span>
+                <span className="sm:hidden text-lg">⚙️</span>
+              </Link>
             </div>
           </div>
-
-          <Link
-            href="/admin/login"
-            className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-sm font-semibold text-white shadow-xl shadow-slate-900/20 hover:bg-slate-800 hover:-translate-y-0.5 transition-all"
-          >
-            Admin Login
-          </Link>
         </div>
 
-        {/* KATEGORİ FİLTRE BUTONLARI */}
+        {/* YATAY KAYDIRILABİLİR KATEGORİ ÇUBUĞU (TRENDYOL TARZI) */}
         {!loading && items.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-8">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  selectedCategory === category
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
-                    : "bg-white text-slate-600 border border-slate-200 hover:border-blue-300 hover:text-blue-600 shadow-sm"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 border ${
+                    selectedCategory === category
+                      ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600 shadow-sm"
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
           </div>
         )}
+      </header>
 
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 mt-6 sm:mt-8">
+        
         {/* İÇERİK ALANI */}
         {loading ? (
-          <div className="min-h-[320px] flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600" />
+          <div className="min-h-[320px] flex flex-col gap-4 items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600"></div>
+            <p className="text-sm font-medium text-slate-500 animate-pulse">Loading machines...</p>
           </div>
         ) : error ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
-            Hata: {error}
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700 text-sm font-medium">
+            Error: {error}
           </div>
         ) : envMissing ? (
-          <div className="rounded-2xl border border-orange-200 bg-orange-50 p-6 text-orange-700">
-            Yayına alınan ortamda Supabase anahtarları bulunamadı.
+          <div className="rounded-2xl border border-orange-200 bg-orange-50 p-6 text-orange-700 text-sm font-medium">
+            Supabase keys are missing in production.
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
-            {selectedCategory === "All" 
-              ? "Henüz ürün eklenmemiş." 
-              : `"${selectedCategory}" kategorisinde ürün bulunamadı.`}
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 flex flex-col items-center justify-center text-center">
+             <span className="text-4xl mb-3">📦</span>
+            <p className="text-slate-500 font-medium">
+              {selectedCategory === "All" 
+                ? "Inventory is empty." 
+                : `No equipment found in "${selectedCategory}".`}
+            </p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          
+          /* YENİ GRID YAPISI: Mobilde 2 sütun (Trendyol tarzı), tablette 3, bilgisayarda 4 */
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
             {filteredItems.map((item) => {
               const statusText = item.status?.toString().toLowerCase() === "available"
                 ? "Available"
@@ -172,40 +176,59 @@ export default function HomePage() {
                 <Link
                   key={item.id}
                   href={`/product/${item.id}`}
-                  className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                  className="group bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
                 >
-                  <div className="h-64 bg-slate-100 overflow-hidden relative">
+                  {/* Kompakt Resim Alanı */}
+                  <div className="h-40 sm:h-52 bg-slate-50 relative overflow-hidden">
                     <img
                       src={item.image_urls[0] || "/placeholder.png"}
                       alt={item.title}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+                      className="h-full w-full object-contain p-2 transition duration-700 group-hover:scale-110"
                     />
-                    <div className="absolute top-4 right-4">
-                       <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full shadow-sm backdrop-blur-md border ${
+                    
+                    {/* Durum Rozeti (Mobilde daha küçük) */}
+                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
+                       <span className={`px-2 py-1 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-black uppercase tracking-wider rounded-md shadow-sm border ${
                          statusText === "Available" 
-                          ? "bg-emerald-500/90 text-white border-emerald-400" 
-                          : "bg-red-500/90 text-white border-red-400"
+                          ? "bg-white/90 text-emerald-600 border-emerald-100" 
+                          : "bg-white/90 text-red-600 border-red-100"
                        }`}>
                          {statusText}
                        </span>
                     </div>
                   </div>
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 mb-3 text-sm">
-                      <span className="text-blue-600 font-semibold bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-md">
-                        {/* Kategori ismini kartta da düzenli gösteriyoruz */}
+                  
+                  {/* Kompakt Detay Alanı */}
+                  <div className="p-3 sm:p-5 flex flex-col flex-grow">
+                    <div className="mb-1 sm:mb-2">
+                      <span className="text-[10px] sm:text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">
                         {formatCategory(item.category)}
                       </span>
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900 mb-1 truncate">{item.title}</h2>
-                    <p className="text-slate-500 text-sm mb-4 truncate">
-                      {item.brand} • {item.model}
+                    
+                    {/* Başlığı kısıtla (2 satıra sığsın) */}
+                    <h2 className="text-sm sm:text-lg font-bold text-slate-800 leading-tight line-clamp-2 mb-1">
+                      {item.title}
+                    </h2>
+                    
+                    <p className="text-[10px] sm:text-sm font-medium text-slate-400 mb-2 truncate">
+                      {item.brand} {item.model && `• ${item.model}`}
                     </p>
-                    <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-2">
-                      <span className="text-2xl font-extrabold text-slate-900">£{item.price.toLocaleString("en-GB")}</span>
-                      <span className="text-blue-600 text-sm font-medium flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                        Details <span aria-hidden="true">&rarr;</span>
-                      </span>
+                    
+                    {/* Fiyatı alta daya */}
+                    <div className="mt-auto pt-2 border-t border-slate-50 flex items-center justify-between">
+                      <div className="flex items-start gap-0.5 text-blue-600">
+                        <span className="text-xs sm:text-sm font-bold mt-0.5">£</span>
+                        <span className="text-base sm:text-xl font-black tracking-tight leading-none">
+                          {item.price.toLocaleString("en-GB")}
+                        </span>
+                      </div>
+                      
+                      <div className="bg-slate-100 text-slate-400 group-hover:bg-blue-600 group-hover:text-white rounded-lg p-1.5 sm:p-2 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </Link>
